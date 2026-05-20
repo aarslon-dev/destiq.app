@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Destiq — Intelligent Travel Routing</title>
+  <meta name="description" content="Destiq analyzes your travel history and preferences to recommend intelligent route combinations you would never have discovered on your own." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --teal:     #1D9E75;
+      --teal-lt:  #5DCAA5;
+      --teal-xlt: #9FE1CB;
+      --teal-dk:  #0F6E56;
+      --teal-xdk: #085041;
+      --mint:     #F4FEFA;
+      --mint-2:   #E1F5EE;
+      --text:     #042C1E;
+      --text-lt:  #1a5040;
+      --warm-gray:#6B8078;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--mint);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(29,158,117,.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(29,158,117,.05) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      bottom: -10vh;
+      left: -10vw;
+      width: 60vw;
+      height: 60vh;
+      background: radial-gradient(ellipse, rgba(93,202,165,.2) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.25rem 3rem;
+      background: rgba(244,254,250,.88);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(29,158,117,.12);
+    }
+
+    .nav-logo {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.3rem;
+      font-weight: 800;
+      color: var(--teal-xdk);
+      text-decoration: none;
+      letter-spacing: -.02em;
+    }
+    .nav-logo span { color: var(--teal); }
+
+    .nav-back {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .75rem;
+      color: var(--warm-gray);
+      text-decoration: none;
+      letter-spacing: .06em;
+      transition: color .2s;
+    }
+    .nav-back:hover { color: var(--teal-dk); }
+
+    /* HERO */
+    .hero {
+      position: relative;
+      z-index: 1;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 8rem 2rem 4rem;
+    }
+
+    .hero-eyebrow {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .7rem;
+      color: var(--teal);
+      letter-spacing: .22em;
+      text-transform: uppercase;
+      margin-bottom: 2rem;
+      opacity: 0;
+      animation: fadeUp .6s ease forwards .2s;
+    }
+
+    .hero-title {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(3rem, 8vw, 6.5rem);
+      font-weight: 800;
+      color: var(--teal-xdk);
+      line-height: 1;
+      letter-spacing: -.03em;
+      margin-bottom: 1rem;
+      opacity: 0;
+      animation: fadeUp .7s ease forwards .35s;
+    }
+
+    .hero-title .accent {
+      color: var(--teal);
+      position: relative;
+      display: inline-block;
+    }
+
+    .hero-sub {
+      font-size: clamp(1rem, 2vw, 1.15rem);
+      color: var(--text-lt);
+      max-width: 500px;
+      line-height: 1.75;
+      margin: 0 auto 3rem;
+      font-weight: 300;
+      opacity: 0;
+      animation: fadeUp .7s ease forwards .5s;
+    }
+
+    .hero-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: .6rem;
+      padding: .9rem 2.2rem;
+      background: var(--teal);
+      color: white;
+      font-family: 'DM Sans', sans-serif;
+      font-size: .9rem;
+      font-weight: 500;
+      text-decoration: none;
+      border-radius: 100px;
+      transition: background .25s, transform .2s;
+      opacity: 0;
+      animation: fadeUp .7s ease forwards .65s;
+    }
+    .hero-cta:hover {
+      background: var(--teal-dk);
+      transform: translateY(-2px);
+    }
+
+    /* route map mockup */
+    .route-mockup {
+      position: relative;
+      width: 100%;
+      max-width: 560px;
+      margin: 4rem auto 0;
+      opacity: 0;
+      animation: fadeUp .8s ease forwards .8s;
+    }
+
+    .route-card {
+      background: white;
+      border: 1px solid rgba(29,158,117,.15);
+      border-radius: 20px;
+      padding: 1.5rem;
+      box-shadow: 0 12px 40px rgba(8,80,65,.08);
+    }
+
+    .route-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.2rem;
+    }
+
+    .route-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .65rem;
+      color: var(--teal);
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    .route-score {
+      background: var(--mint-2);
+      color: var(--teal-dk);
+      font-family: 'Syne', sans-serif;
+      font-size: .8rem;
+      font-weight: 700;
+      padding: .25rem .75rem;
+      border-radius: 100px;
+    }
+
+    .route-stops {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
+    }
+
+    .stop {
+      background: var(--mint-2);
+      border: 1px solid rgba(29,158,117,.2);
+      border-radius: 100px;
+      padding: .35rem .9rem;
+      font-size: .8rem;
+      color: var(--teal-xdk);
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    .stop-arrow {
+      color: var(--teal-lt);
+      font-size: .9rem;
+    }
+
+    .route-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: .75rem;
+      padding-top: 1rem;
+      border-top: 1px solid rgba(29,158,117,.1);
+    }
+
+    .stat-item { text-align: center; }
+    .stat-val {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--teal-dk);
+    }
+    .stat-lbl {
+      font-size: .65rem;
+      color: var(--warm-gray);
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
+    /* FEATURES */
+    #features {
+      position: relative;
+      z-index: 1;
+      padding: 6rem 2rem;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .section-eyebrow {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .7rem;
+      color: var(--teal);
+      letter-spacing: .15em;
+      text-transform: uppercase;
+      margin-bottom: 1rem;
+    }
+
+    .section-title {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(1.8rem, 4vw, 2.6rem);
+      font-weight: 800;
+      color: var(--teal-xdk);
+      margin-bottom: 1rem;
+      letter-spacing: -.02em;
+    }
+
+    .section-sub {
+      font-size: 1rem;
+      color: var(--text-lt);
+      max-width: 480px;
+      line-height: 1.7;
+      margin-bottom: 3rem;
+      font-weight: 300;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .feature-card {
+      background: white;
+      border: 1px solid rgba(29,158,117,.12);
+      border-radius: 16px;
+      padding: 2rem;
+      transition: transform .3s, border-color .3s, box-shadow .3s;
+    }
+    .feature-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(29,158,117,.35);
+      box-shadow: 0 8px 24px rgba(8,80,65,.08);
+    }
+
+    .feature-icon {
+      width: 48px;
+      height: 48px;
+      background: var(--mint-2);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      margin-bottom: 1.2rem;
+    }
+
+    .feature-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--teal-xdk);
+      margin-bottom: .5rem;
+    }
+
+    .feature-desc {
+      font-size: .9rem;
+      color: var(--text-lt);
+      line-height: 1.7;
+      font-weight: 300;
+    }
+
+    /* COMING SOON */
+    #notify {
+      position: relative;
+      z-index: 1;
+      padding: 6rem 2rem;
+      text-align: center;
+      border-top: 1px solid rgba(29,158,117,.12);
+    }
+
+    .notify-inner { max-width: 480px; margin: 0 auto; }
+
+    .coming-soon-badge {
+      display: inline-block;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .7rem;
+      letter-spacing: .15em;
+      text-transform: uppercase;
+      padding: .4rem 1.2rem;
+      background: var(--mint-2);
+      color: var(--teal-dk);
+      border-radius: 100px;
+      margin-bottom: 1.5rem;
+    }
+
+    #notify h2 {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(1.8rem, 4vw, 2.8rem);
+      font-weight: 800;
+      color: var(--teal-xdk);
+      margin-bottom: 1rem;
+      letter-spacing: -.02em;
+    }
+
+    #notify p {
+      font-size: 1rem;
+      color: var(--text-lt);
+      line-height: 1.7;
+      margin-bottom: 2rem;
+      font-weight: 300;
+    }
+
+    footer {
+      position: relative;
+      z-index: 1;
+      padding: 2rem 3rem;
+      border-top: 1px solid rgba(29,158,117,.1);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    footer p {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .7rem;
+      color: var(--warm-gray);
+      letter-spacing: .04em;
+    }
+
+    footer a { color: var(--teal-dk); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 600px) {
+      nav { padding: 1rem 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <a href="https://imaginadev.com" class="nav-logo"><span>D</span>estiq</a>
+    <a href="https://imaginadev.com" class="nav-back">← imaginadev.com</a>
+  </nav>
+
+  <section class="hero">
+    <div class="hero-eyebrow">by ImaginaDev LLC</div>
+    <h1 class="hero-title">Destination <span class="accent">IQ.</span></h1>
+    <p class="hero-sub">
+      Destiq analyzes where you've been and how you travel to recommend intelligent route combinations you'd never have discovered on your own.
+    </p>
+    <a href="#notify" class="hero-cta">Get Early Access →</a>
+
+    <div class="route-mockup">
+      <div class="route-card">
+        <div class="route-header">
+          <span class="route-label">// recommended route</span>
+          <span class="route-score">98% match</span>
+        </div>
+        <div class="route-stops">
+          <span class="stop">Lisbon</span>
+          <span class="stop-arrow">→</span>
+          <span class="stop">Seville</span>
+          <span class="stop-arrow">→</span>
+          <span class="stop">Porto</span>
+          <span class="stop-arrow">→</span>
+          <span class="stop">Sintra</span>
+        </div>
+        <div class="route-stats">
+          <div class="stat-item">
+            <div class="stat-val">14</div>
+            <div class="stat-lbl">Days</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-val">4</div>
+            <div class="stat-lbl">Cities</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-val">2</div>
+            <div class="stat-lbl">Countries</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="features">
+    <div class="section-eyebrow">// how it works</div>
+    <h2 class="section-title">Smarter routes.<br>Better trips.</h2>
+    <p class="section-sub">Destiq learns from your travel history to build routes that match how you actually travel.</p>
+
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">🧠</div>
+        <div class="feature-title">Learns your travel style</div>
+        <p class="feature-desc">Fast-paced explorer or slow and immersive? Destiq figures out how you travel and recommends routes that fit your rhythm.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🗺️</div>
+        <div class="feature-title">Intelligent clustering</div>
+        <p class="feature-desc">Destiq groups destinations by geography, culture, and travel efficiency — so every route makes logical sense and flows naturally.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔍</div>
+        <div class="feature-title">Hidden gems included</div>
+        <p class="feature-desc">Beyond the obvious stops, Destiq surfaces lesser-known destinations that match your taste — places you'd actually love but never searched for.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="notify">
+    <div class="notify-inner">
+      <div class="coming-soon-badge">Coming Soon</div>
+      <h2>Where next?</h2>
+      <p>Destiq is in development for iOS. Join the waitlist and be the first to discover your next perfect route.</p>
+      <a href="mailto:info@imaginadev.com?subject=Destiq Waitlist" class="hero-cta">Join the Waitlist →</a>
+    </div>
+  </section>
+
+  <footer>
+    <p>© 2026 <a href="https://imaginadev.com">ImaginaDev LLC</a></p>
+    <p>/* develop with imagination */</p>
+  </footer>
+
+</body>
+</html>
